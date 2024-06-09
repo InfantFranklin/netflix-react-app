@@ -1,10 +1,29 @@
 import React, { useState } from "react";
 import { createImageUrl } from "../services/movieServices";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { db } from "../services/firebase";
+import { userAuth } from "../context/AuthContext";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 
 const MovieItem = ({ movie }) => {
   const { title, backdrop_path, poster_path } = movie;
+  const { user } = userAuth();
   const [like, setLike] = useState(false);
+
+  const addToFavorite = async () => {
+    const userEmail = user?.email;
+
+    if (userEmail) {
+      const userDoc = doc(db, "users", userEmail);
+      setLike(!like);
+      await updateDoc(userDoc, {
+        showFavorites: arrayUnion({ ...movie }),
+      });
+    } else {
+      alert("Login to save a movie...");
+    }
+  };
+
   return (
     <>
       <div className="relative w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] inline-block rounded-lg overflow-hidden cursor-pointer m-2">
@@ -17,7 +36,7 @@ const MovieItem = ({ movie }) => {
           <p className=" whitespace-normal text-xs sm:text-sm flex justify-center items-center h-full font-nsans-bold">
             {title}
           </p>
-          <p>
+          <p onClick={addToFavorite}>
             {like ? (
               <FaHeart
                 size={20}
